@@ -1,0 +1,25 @@
+require 'inspector'
+
+local SubRecord = @record{
+  -- a: string,
+  b: byte,
+}
+
+local MyRecord = @record{
+  x: integer,
+  y: number,
+  -- z: SubRecord,
+}
+
+local function test()
+  local foo = MyRecord{
+    10,
+    20,
+    --{ 128}
+  }
+
+  local foo_inspected <close> = inspector(foo)
+  print(foo_inspected)
+end
+
+test()
