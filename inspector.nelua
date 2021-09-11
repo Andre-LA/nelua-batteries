@@ -1,46 +1,20 @@
 require 'stringbuilder'
 
-local InspectorOptions = @record{
-  depth: uinteger,
-}
-
 ##[[
 local function typename(t)
   return t.nickname or tostring(t)
 end
 
-local function indent(level)
+local function gen_indent(level)
   return string.rep('  ', level)
 end
 
-local f = string.format
+local fmt = string.format
 ]]
 
-## local function inspect_record(value, level, sb)
-  ## for _, field in ipairs(value.type.fields) do
-    ## local field_and_type = f('%s%s: %s = ', indent(level), field.name, typename(field.type))
-
-    local field_value: #[field.type]# = value.#|field.name|#
-
-    ## if field.type.is_record and not field.type.is_string then
-
-      ## print('~>', field.name)
-
-      sb:write(#[f('%s{\n', typename(field.type))]#)
-
-      #[inspect_record]#(field_value, #[level + 1]#, sb)
-
-      sb:write('},\n')
-    ## else
-      ## if field.type.is_string then
-        sb:write(#[indent(level+1)..field_and_type]#, '"', field_value, '"', ',\n')
-
-      ## else
-        sb:write(#[indent(level+1)..field_and_type]#, field_value, ',\n')
-      ## end
-    ## end
-  ## end
-## end
+local InspectorOptions = @record{
+  depth: uinteger,
+}
 
 global function inspector(value: auto, options: facultative(InspectorOptions)): string
   ## if options.type.is_niltype then
@@ -50,8 +24,30 @@ global function inspector(value: auto, options: facultative(InspectorOptions)): 
   local sb: stringbuilder;
   defer sb:destroy() end
 
+  ## local function inspect_record(vl, level, sb)
+    ## local indent, extra_indent = gen_indent(level), gen_indent(level + 1)
+
+    ## for _, field in ipairs(vl.type.fields) do
+      ## local field_and_type = fmt('%s: %s = ', field.name, typename(field.type))
+
+      local field_value: #[field.type]# = #[vl]#.#|field.name|#
+
+      ## if field.type.is_record and not field.type.is_string then
+        sb:write(#[fmt('%s%s{\n', extra_indent, typename(field.type))]#)
+        #[inspect_record]#(field_value, #[level + 1]#, sb)
+        sb:write(#[fmt('%s},\n', extra_indent)]#)
+      ## else
+        ## if field.type.is_string then
+          sb:write(#[extra_indent .. field_and_type]#, '"', field_value, '"', ',\n')
+        ## else
+          sb:write(#[extra_indent .. field_and_type]#, field_value, ',\n')
+        ## end
+      ## end
+    ## end
+  ## end
+
   ## if value.type.is_record then
-    sb:write(#[f('%s{\n', typename(value.type))]#)
+    sb:write(#[fmt('%s{\n', typename(value.type))]#)
     #[inspect_record]#(value, 0, sb)
     sb:write('}')
   ## else

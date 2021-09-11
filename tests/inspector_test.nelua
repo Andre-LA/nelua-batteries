@@ -1,21 +1,21 @@
 require 'inspector'
 
 local SubRecord = @record{
-  -- a: string,
+  a: string,
   b: byte,
 }
 
 local MyRecord = @record{
   x: integer,
   y: number,
-  -- z: SubRecord,
+  z: SubRecord,
 }
 
 local function test()
   local foo = MyRecord{
     10,
     20,
-    --{ 128}
+    { 'hello world!', 128},
   }
 
   local foo_inspected <close> = inspector(foo)
@@ -23,3 +23,4 @@ local function test()
 end
 
 test()
+
