@@ -1,21 +1,41 @@
 require 'inspector'
 
+local Weeks = @enum{
+  Sunday = 0,
+  Monday,
+  Tuesday,
+  Wednesday,
+  Thursday,
+  Friday,
+  Saturday
+}
+
+local Masks = @enum(byte){
+  First = 1,
+  Second = 2,
+  Third = 4,
+}
+
 local SubRecord = @record{
   a: string,
-  b: byte,
+  b: boolean,
 }
 
 local MyRecord = @record{
   x: integer,
   y: number,
   z: SubRecord,
+  w: Weeks,
+  m: Masks,
 }
 
 local function test()
   local foo = MyRecord{
     10,
     20,
-    { 'hello world!', 128},
+    { 'hello world!', true},
+    Weeks.Friday,
+    Masks.Third,
   }
 
   local foo_inspected <close> = inspector(foo)

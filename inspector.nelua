@@ -33,14 +33,22 @@ global function inspector(value: auto, options: facultative(InspectorOptions)): 
       local field_value: #[field.type]# = #[vl]#.#|field.name|#
 
       ## if field.type.is_record and not field.type.is_string then
-        sb:write(#[fmt('%s%s{\n', extra_indent, typename(field.type))]#)
-        #[inspect_record]#(field_value, #[level + 1]#, sb)
-        sb:write(#[fmt('%s},\n', extra_indent)]#)
+        ## local open_embed_rec = fmt('%s%s{\n', extra_indent, typename(field.type))
+        ## local close_embed_rec = fmt('%s},\n', extra_indent)
+
+        sb:write(#[open_embed_rec]#)                       -- '  MyRecord{'
+        #[inspect_record]#(field_value, #[level + 1]#, sb) -- '    myfield: byte, -- ... (recursive)'
+        sb:write(#[close_embed_rec]#)                      -- '  }'
+
       ## else
         ## if field.type.is_string then
-          sb:write(#[extra_indent .. field_and_type]#, '"', field_value, '"', ',\n')
+          sb:write(#[extra_indent .. field_and_type]#, '"', field_value, '"', ',\n') -- '  myfield: string = "string value"'
         ## else
-          sb:write(#[extra_indent .. field_and_type]#, field_value, ',\n')
+          ## if field.type.is_enum then
+            sb:write(#[extra_indent..field_and_type]#, field_value, #[fmt(', -- @%s is @enum(%s)\n', typename(field.type), field.type.subtype)]#) -- '  myfield: EnumType = value, -- @enum(subtype)'
+          ## else
+            sb:write(#[extra_indent..field_and_type]#, field_value, ',\n') -- '  myfield: fieldtype = value,'
+          ## end
         ## end
       ## end
     ## end
