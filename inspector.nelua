@@ -1,16 +1,21 @@
 require 'stringbuilder'
 
 ##[[
-local function typename(t)
-  return t.nickname or tostring(t)
+local function typename(ty)
+  return ty.nickname or tostring(ty)
 end
 
 local function gen_indent(level)
   return string.rep('  ', level)
 end
 
+
 local fmt = string.format
 ]]
+
+local an_scalar = #[concept(function(attr)
+  return attr.type.is_scalar and true or false
+end)]#
 
 local InspectorOptions = @record{
   depth: uinteger,
@@ -21,43 +26,74 @@ global function inspector(value: auto, options: facultative(InspectorOptions)): 
   local options: InspectorOptions = {}
   ## end
 
+  local function write_string(vl: string, sb: *stringbuilder) --> '  myfield: string = "string value"'
+    sb:write(': string = "', vl, '"')
+  end
+
+  local function write_enum(vl: integer, enumtype: type, sb: *stringbuilder) --> '  myfield: EnumType = intvalue'
+    ## local type_str = fmt(': %s = ', typename(enumtype.value))
+    ## local subtype_str = fmt('@enum(%s)', typename(enumtype.value.subtype))
+
+    sb:write(#[type_str]#, vl, #[' --[[ ' .. subtype_str .. ' ]]']#)
+  end
+
+  local function write_scalar(vl: an_scalar, sb: *stringbuilder) --> '  myfield: number = value'
+    ## local type_str = fmt(': %s = ', typename(vl.type))
+    sb:write(#[type_str]#, vl)
+  end
+
+  local function write_boolean(vl: boolean, sb: *stringbuilder) --> '  myfield: number = value'
+    sb:write(': boolean = ', vl)
+  end
+
+  local function write_array(vl: auto, sb: *stringbuilder) --> '  myfield: array = {my, values}'
+    sb:write(': array = {')
+    for i = 0, < #vl - 2 do
+      sb:write(vl[i], ', ')
+    end
+    sb:write(vl[#vl - 1], '}')
+  end
+
+  local function write_record(vl: auto, indent: string, sb: *stringbuilder)
+    sb:write(#[typename(vl.type) .. ' = {\n']#)
+
+    ## for _, field in ipairs(vl.type.fields) do
+      -- ## print(field.name, require 'inspect' (field.type, {depth = 1}))
+      local indent_plus <close> = indent .. '  '
+      sb:write(indent_plus, #[field.name]#)
+
+      ## if field.type.is_string then
+        write_string(vl.#|field.name|#, sb)
+
+      ## elseif field.type.is_enum then
+        write_enum(vl.#|field.name|#, #[field.type]#, sb)
+
+      ## elseif field.type.is_record then
+        sb:write(': ')
+        write_record(vl.#|field.name|#, indent_plus, sb)
+
+      ## elseif field.type.is_array then
+        write_array(vl.#|field.name|#, sb)
+
+      ## elseif field.type.is_scalar then
+        write_scalar(vl.#|field.name|#, sb)
+
+      ## elseif field.type.is_boolean then
+        write_boolean(vl.#|field.name|#, sb)
+
+      ## end
+
+      sb:write(',\n')
+    ## end
+
+    sb:write(indent, '}')
+  end
+
   local sb: stringbuilder;
   defer sb:destroy() end
 
-  ## local function inspect_record(vl, level, sb)
-    ## local indent, extra_indent = gen_indent(level), gen_indent(level + 1)
-
-    ## for _, field in ipairs(vl.type.fields) do
-      ## local field_and_type = fmt('%s: %s = ', field.name, typename(field.type))
-
-      local field_value: #[field.type]# = #[vl]#.#|field.name|#
-
-      ## if field.type.is_record and not field.type.is_string then
-        ## local open_embed_rec = fmt('%s%s{\n', extra_indent, typename(field.type))
-        ## local close_embed_rec = fmt('%s},\n', extra_indent)
-
-        sb:write(#[open_embed_rec]#)                       -- '  MyRecord{'
-        #[inspect_record]#(field_value, #[level + 1]#, sb) -- '    myfield: byte, -- ... (recursive)'
-        sb:write(#[close_embed_rec]#)                      -- '  }'
-
-      ## else
-        ## if field.type.is_string then
-          sb:write(#[extra_indent .. field_and_type]#, '"', field_value, '"', ',\n') -- '  myfield: string = "string value"'
-        ## else
-          ## if field.type.is_enum then
-            sb:write(#[extra_indent..field_and_type]#, field_value, #[fmt(', -- @%s is @enum(%s)\n', typename(field.type), field.type.subtype)]#) -- '  myfield: EnumType = value, -- @enum(subtype)'
-          ## else
-            sb:write(#[extra_indent..field_and_type]#, field_value, ',\n') -- '  myfield: fieldtype = value,'
-          ## end
-        ## end
-      ## end
-    ## end
-  ## end
-
   ## if value.type.is_record then
-    sb:write(#[fmt('%s{\n', typename(value.type))]#)
-    #[inspect_record]#(value, 0, sb)
-    sb:write('}')
+    write_record(value, '', sb)
   ## else
     ## static_error('inspector: type unsuported: '..tostring(value.type))
   ## end
@@ -65,3 +101,4 @@ global function inspector(value: auto, options: facultative(InspectorOptions)): 
   local result = tostring(sb)
   return result
 end
+

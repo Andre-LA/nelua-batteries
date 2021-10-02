@@ -21,21 +21,35 @@ local SubRecord = @record{
   b: boolean,
 }
 
+local NestedRecords = @record{
+  nr: record{
+    nr2: record{
+      sr: SubRecord
+    }
+  }
+}
+
 local MyRecord = @record{
   x: integer,
   y: number,
+  s: string,
   z: SubRecord,
   w: Weeks,
   m: Masks,
+  arr: [4]integer,
+  nr: NestedRecords
 }
 
 local function test()
   local foo = MyRecord{
     10,
     20,
-    { 'hello world!', true},
+    'hello',
+    { 'world!', true },
     Weeks.Friday,
     Masks.Third,
+    {1, 3, 6, 9},
+    { nr = { nr2 = { sr = { 'nested records!', false } }  } }
   }
 
   local foo_inspected <close> = inspector(foo)
