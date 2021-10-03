@@ -46,8 +46,8 @@ global function inspector(value: auto, options: facultative(InspectorOptions)): 
     sb:write(': boolean = ', vl)
   end
 
-  local function write_array(vl: auto, sb: *stringbuilder) --> '  myfield: array = {my, values}'
-    sb:write(': array = {')
+  local function write_array(vl: auto, sb: *stringbuilder) --> '  myfield: array(type, size) = {my, values}'
+    sb:write(#[': ' .. typename(vl.type) .. ' = {']#)
     for i = 0, < #vl - 2 do
       sb:write(vl[i], ', ')
     end
